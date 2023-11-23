@@ -49,9 +49,9 @@ FROM `Target.Geolocation`
 
 **2. In-depth Exploration**
 
-**2.1 Is there a growing trend on e-commerce in Brazil? How can we describe a complete scenario? 
+**2.1 Is there a growing trend on e-commerce in Brazil? How can we describe a complete scenario?**
 
-2.2 Can we see some seasonality with peaks at specific months?**
+**2.2 Can we see some seasonality with peaks at specific months?**
 ~~~ SQL
 SELECT
 COUNT(Distinct order_id) AS total_orders,
@@ -92,6 +92,7 @@ END as Buying_time FROM
 
 ~~~
 ![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/37171c89-1184-493d-a7f7-7fdf109bfccc)
+
 Nighttime purchases had the highest count of 38,652, followed by afternoon purchases with a count of 38,361. Morning and Dawn purchases had the lowest count with 22,240.
 
 **3. Evolution of E-commerce Orders in Brazil Region**
@@ -114,7 +115,7 @@ ORDER BY customer_state, Year,Month
 ![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/5a0f814d-1ed5-4582-a014-13c1c529bae0)
 
 
-**How are the customers distributed across all the states?**
+**3.2 How are the customers distributed across all the states?**
 
 ~~~ SQL
 SELECT
@@ -214,9 +215,7 @@ Recommendation- we can analyze the reason for the late delivery and give the cor
 **Insight2**- After sorting data by Delivery_time we can see there is an order which is delivered on the same day or in 1 day.
 Recommendation- We can encourage these customers to give good reviews on our online platform or in google my business.
 
-
-**Find time_to_delivery & diff_estimated_delivery. Formula for the same given below:**
-
+**5.2 Find out the top 5 states with the highest & lowest average delivery time.**
 ~~~ SQL
 SELECT
  	order_purchase_timestamp,
@@ -269,9 +268,9 @@ WHERE order_delivered_customer_date IS NOT NULL)
 ~~~
 ![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/ceb8ba04-d57a-44a4-9640-98883f421c45)
 
-
+**5.4 Top 5 states with highest/lowest average freight value - sort in desc/asc limit 5**
 ~~~ SQL
-/*Top 5 states with highest/lowest average freight value - sort in desc/asc limit 5*/
+
 SELECT customer_state,AVG(freight_value) AS Avg_Freight
 FROM
 (SELECT
@@ -296,9 +295,9 @@ ORDER BY Avg_Freight DESC LIMIT 5;
 ![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/fe860418-66ba-4661-b668-73fab3999fca)
 
 
-
+**5.3 Top 5 states with highest/lowest average time to delivery**
 ~~~ SQL
-/*Top 5 states with highest/lowest average time to delivery*/
+
 SELECT
 customer_state,
 AVG(time_to_delivery) AS Avg_time_to_delivery FROM
