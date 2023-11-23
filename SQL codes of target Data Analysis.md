@@ -1,5 +1,6 @@
+**1. Exploratory analysis**
 ~~~ SQL
-/*1. Data type of columns in a table*/
+/*1.1 Data type of columns in a table*/
 /*Sellers*/
 
 SELECT * FROM Target.INFORMATION_SCHEMA.COLUMNS
@@ -19,7 +20,7 @@ FROM `Target.Sellers`
 
 
 ~~~ SQL
-/*Time period for which the data is given*/
+/*1.2Time period for which the data is given*/
 
 SELECT MIN (order_purchase_timestamp) AS min_value,
 MAX(order_purchase_timestamp) AS max_value
@@ -30,7 +31,7 @@ FROM `Target.Orders
 
 
 ~~~ SQL
-/*Cities and States of customers ordered during the given period*/
+/*1.3 Cities and States of customers ordered during the given period*/
 /*City*/
 SELECT Distinct geolocation_city
 FROM `Target.Geolocation`
@@ -47,8 +48,10 @@ FROM `Target.Geolocation`
 ![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/54349f40-5215-4d7f-9251-29f2d34b4d9e)
 
 **2. In-depth Exploration**
+
+**2.1 Is there a growing trend on e-commerce in Brazil? How can we describe a complete scenario? 
+2.2 Can we see some seasonality with peaks at specific months?**
 ~~~ SQL
-/*2.1 Is there a growing trend on e-commerce in Brazil? How can we describe a complete scenario? Can we see some seasonality with peaks at specific months?*/
 SELECT
 COUNT(Distinct order_id) AS total_orders,
 EXTRACT(Month from order_purchase_timestamp) As Month,
@@ -66,8 +69,9 @@ Regarding seasonality, there are some peaks at speciﬁc months in Brazil. In Fe
 
 Recommendation- there was a speciﬁc event or promotion that caused an increase in demand in Feb & Nov 2017.. The business should investigate the cause of this spike and try to replicate it in the future.
 
+
+**2.3 What time do Brazilian customers tend to buy (Dawn, Morning, Afternoon or Night)?**
 ~~~ SQL
-/*2.2 What time do Brazilian customers tend to buy (Dawn, Morning, Afternoon or Night)?*/
 SELECT Buying_time, count(Buying_time) as Count_of_buying
 FROM
 (SELECT
@@ -88,9 +92,10 @@ END as Buying_time FROM
 ~~~
 ![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/37171c89-1184-493d-a7f7-7fdf109bfccc)
 Nighttime purchases had the highest count of 38,652, followed by afternoon purchases with a count of 38,361. Morning and Dawn purchases had the lowest count with 22,240.
-**Evolution of E-commerce Orders in Brazil Region**
+**3. Evolution of E-commerce Orders in Brazil Region**
+
+**3.1 Get month-on-month orders by states**
 ~~~ SQL
-/*Get month-on-month orders by states*/
 SELECT
 customer_state,
 count(distinct(order_id)) as Customer_count, Month,
@@ -105,8 +110,9 @@ ORDER BY customer_state, Year,Month
 ~~~
 ![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/5a0f814d-1ed5-4582-a014-13c1c529bae0)
 
+
+**How are the customers distributed across all the states?**
 ~~~ SQL
-/*Get month-on-month orders by states*/
 SELECT
 customer_state,
 count(distinct(customer_id)) as Customer_count FROM `Target.Customers`
@@ -124,10 +130,12 @@ Recommendation-Focus on retaining customers in states with high customer counts 
 -For states with low customer counts, consider targeted marketing campaigns to
 acquire new customers, such as social media advertising, inﬂuencer partnerships, or referral programs.
 
-**Impact on Economy: Analyze the money movement by e-commerce by looking at order prices, freight and others**
+**4. Impact on Economy: Analyze the money movement by e-commerce by looking at order prices, freight and others**
 
+
+**4.1 Get % increase in cost of orders from 2017 to 2018 (include months between Jan to Aug only)**
+**You can use “payment_value” column in payments table**
 ~~~ SQL
-/*Get % increase in cost of orders from 2017 to 2018 (include months between Jan to Aug only) - You can use “payment_value” column in payments table*/
 With Base as (select
 EXTRACT(Year from order_purchase_timestamp) As Year, Sum(payment_value)as revenue
 From `Target.Orders` as t
@@ -141,8 +149,9 @@ SELECT *, (revenue-previous_revenue)/previous_revenue*100 as per_INC from base2
 **Recommendation**- Use the revenue data to inform budgeting and resource allocation decisions, such as increasing investments in marketing or expanding product offerings in high-growth areas.
 
 
+
+**4.2 and 4.3 Mean & Sum of price and freight value by a customer state**
 ~~~ SQL
-/*4.2 Mean & Sum of price and freight value by a customer state*/
 SELECT
 customer_state,
 SUM(price) AS Price_Sum,
@@ -169,8 +178,9 @@ Recommendation-
 -The states with higher average prices and freight values may be good targets for marketing campaigns for higher-end products, while those with lower values may be better suited for more affordable products.
 
 **5.Analysis of sales, freight, and delivery time**
+
+**5.1 Calculate days between purchasing, delivering and estimated delivery**
 ~~~ SQL
-/*5.1 Calculate days between purchasing, delivering and estimated delivery*/
 SELECT
  	order_purchase_timestamp,
  	order_estimated_delivery_date,
@@ -197,14 +207,10 @@ Recommendation- we can analyze the reason for the late delivery and give the cor
 ![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/dec9d493-bc76-46a1-869f-7f3ac6505194)
 **Insight2**- After sorting data by Delivery_time we can see there is an order which is delivered on the same day or in 1 day.
 Recommendation- We can encourage these customers to give good reviews on our online platform or in google my business.
+
+
+**Find time_to_delivery & diff_estimated_delivery. Formula for the same given below:**
 ~~~ SQL
-/*Find time_to_delivery & diff_estimated_delivery. Formula for the same given below:*/
-~~~
-
-
-
-~~~ SQL
-/*Get month-on-month orders by states*/
 SELECT
  	order_purchase_timestamp,
  	order_delivered_customer_date,
@@ -223,7 +229,6 @@ Optimize logistics processes and consider partnering with reliable carriers to e
 
 
 ~~~ SQL
-/*Get month-on-month orders by states*/
 SELECT
 order_purchase_timestamp, order_estimated_delivery_date,
 DATE_DIFF(order_estimated_delivery_date, order_purchase_timestamp, DAY) AS diff_estimated_delivery
@@ -237,7 +242,7 @@ diff_estimated_delivery desc
 
 
 ~~~ SQL
-/*5.4 Group data by state, take mean of freight_value, time_to_delivery, diff_estimated_delivery*/
+/*Group data by state, take mean of freight_value, time_to_delivery, diff_estimated_delivery*/
 
 SELECT
 customer_state, AVG(freight_value) AS Avg_Freight,
@@ -259,7 +264,7 @@ WHERE order_delivered_customer_date IS NOT NULL)
 
 
 ~~~ SQL
-/*5.5 Top 5 states with highest/lowest average freight value - sort in desc/asc limit 5*/
+/*Top 5 states with highest/lowest average freight value - sort in desc/asc limit 5*/
 SELECT customer_state,AVG(freight_value) AS Avg_Freight
 FROM
 (SELECT
@@ -286,7 +291,7 @@ ORDER BY Avg_Freight DESC LIMIT 5;
 
 
 ~~~ SQL
-/*5.6 Top 5 states with highest/lowest average time to delivery*/
+/*Top 5 states with highest/lowest average time to delivery*/
 SELECT
 customer_state,
 AVG(time_to_delivery) AS Avg_time_to_delivery FROM
@@ -329,9 +334,9 @@ ORDER BY diff_estimated_delivery ASC Limit 5
 
 **6.Payment type analysis:**
 
-~~~ SQL
-/*6.1 Month over Month count of orders for different payment types*/
 
+**6.1 Month over Month count of orders for different payment types**
+~~~ SQL
 With Base as(SELECT Payment_type,
 Month, Year,
 count(distinct(order_id)) as Customer_count,
@@ -347,10 +352,8 @@ SELECT *, (Customer_count-previous_Customer_count)/previous_Customer_count*100 a
 ![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/0f6bcadf-a873-468e-b47f-10bfc1769bc2)
 
 
-
+**6.2 Count of orders based on the no. of payment installments**
 ~~~ SQL
-/*Count of orders based on the no. of payment installments*/
-
 Select payment_installments,
 Count(distinct order_id) as order_count FROM
 `Target.Payments`
