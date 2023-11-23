@@ -87,17 +87,172 @@ END as Buying_time FROM
 
 ~~~
 ![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/37171c89-1184-493d-a7f7-7fdf109bfccc)
+Nighttime purchases had the highest count of 38,652, followed by afternoon purchases with a count of 38,361. Morning and Dawn purchases had the lowest count with 22,240.
+**Evolution of E-commerce Orders in Brazil Region**
+~~~ SQL
+/*Get month-on-month orders by states*/
+SELECT
+customer_state,
+count(distinct(order_id)) as Customer_count, Month,
+Year FROM (SELECT
+o.customer_id,
+t.customer_state,
+o.order_id,
+EXTRACT(Month from order_purchase_timestamp) As Month,
+EXTRACT(Year from order_purchase_timestamp) As Year FROM `Target.Orders` AS o
+LEFT JOIN `Target.Customers` AS t ON o.customer_id = t.customer_id) GROUP BY customer_state, Month, Year
+ORDER BY customer_state, Year,Month
+~~~
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/5a0f814d-1ed5-4582-a014-13c1c529bae0)
 
 ~~~ SQL
-/*State*/
+/*Get month-on-month orders by states*/
+SELECT
+customer_state,
+count(distinct(customer_id)) as Customer_count FROM `Target.Customers`
+GROUP BY customer_state ORDER BY Customer_count DESC
+~~~
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/8ce36e64-ad2e-4243-8971-567d978f3861)
 
+**Insight**
+São Paulo (SP) has the highest number of customers with a count of 41,746, Rio de Janeiro (RJ) has the second highest with 12,852 customers and Minas Gerais (MG) is the third with 11,635 customers.
+
+In Total 27 states, the top 12 states have more than 1000 customers. 13th to 24th have customers of more than 100 but less than 1000.
+The bottom 3 states have less than 100 customers.
+Recommendation-Focus on retaining customers in states with high customer counts by offering promotions, discounts, or loyalty programs to incentivize repeat purchases.
+
+-For states with low customer counts, consider targeted marketing campaigns to
+acquire new customers, such as social media advertising, inﬂuencer partnerships, or referral programs.
+
+**Impact on Economy: Analyze the money movement by e-commerce by looking at order prices, freight and others**
+
+~~~ SQL
+/*Get % increase in cost of orders from 2017 to 2018 (include months between Jan to Aug only) - You can use “payment_value” column in payments table*/
+With Base as (select
+EXTRACT(Year from order_purchase_timestamp) As Year, Sum(payment_value)as revenue
+From `Target.Orders` as t
+inner join `Target.Payments`as p on t.order_id = p.order_id
+where EXTRACT(Month from order_purchase_timestamp) between 1 and 8 GROUP BY Year),
+base2 as (Select *, Lag(revenue) over (order by Year)as previous_revenue from base )
+SELECT *, (revenue-previous_revenue)/previous_revenue*100 as per_INC from base2
+~~~
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/af0ef09f-e8e7-463d-936e-13ff711ddf36)
+**Insight**- The revenue in 2018 is signiﬁcantly higher than in 2017, with a year-over-year increase of 136.98%.
+**Recommendation**- Use the revenue data to inform budgeting and resource allocation decisions, such as increasing investments in marketing or expanding product offerings in high-growth areas.
+
+
+~~~ SQL
+/*4.2 Mean & Sum of price and freight value by a customer state*/
+SELECT
+customer_state,
+SUM(price) AS Price_Sum,
+SUM(freight_value) AS Freight_Sum,
+AVG(price) AS Avg_Price,
+AVG(freight_value) AS Avg_Freight FROM
+`Target.order_items` AS items INNER JOIN
+`Target.Orders` AS o ON
+items.order_id = o.order_id INNER JOIN
+`Target.Customers` AS c ON
+o.customer_id = c.customer_id GROUP BY
+customer_state Order by price_sum
+~~~
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/8e6545c4-5c62-4033-8570-5873dc8ff799)
+
+Insight-
+-The highest total price sum is from the state of São Paulo (SP), which is more than twice the price sum of the second-highest state, Rio de Janeiro (RJ).
+-The highest average price is also from the state of São Paulo (SP), indicating that customers from this state tend to purchase higher-priced items.
+-The lowest total price sum is from the state of Espírito Santo (ES).
+-The highest total freight sum is from the state of Minas Gerais (MG), followed by São Paulo (SP) and Rio de Janeiro (RJ).
+-The highest average freight is from the state of Bahia (BA).
+
+Recommendation-
+-The states with higher average prices and freight values may be good targets for marketing campaigns for higher-end products, while those with lower values may be better suited for more affordable products.
+
+**5.Analysis of sales, freight, and delivery time**
+~~~ SQL
+/*5.1 Calculate days between purchasing, delivering and estimated delivery*/
+SELECT
+ 	order_purchase_timestamp,
+ 	order_estimated_delivery_date,
+ 	order_delivered_customer_date,
+ 	estimated_day,
+ 	Delivery_time,
+     (estimated_day-Delivery_time) AS buffer_day FROM (
+     SELECT
+ 	order_purchase_timestamp,
+ 	order_estimated_delivery_date,
+ 	DATE_DIFF(order_estimated_delivery_date, order_purchase_timestamp, DAY) AS estimated_day,
+ 	order_delivered_customer_date,
+ 	DATE_DIFF(order_delivered_customer_date, order_purchase_timestamp, DAY) AS Delivery_time
+
+FROM
+ 	`Target.Orders`
+     WHERE
+ 	order_delivered_customer_date IS NOT NULL)
+ 	order by buffer_day
+~~~
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/894e1ce7-08f0-463f-9470-aa7653300674)
+**Insight** There is a late delivery of max 189 days and there are several orders having this late delivery.
+Recommendation- we can analyze the reason for the late delivery and give the correct estimated_delivery_date to the customer.
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/dec9d493-bc76-46a1-869f-7f3ac6505194)
+**Insight2**- After sorting data by Delivery_time we can see there is an order which is delivered on the same day or in 1 day.
+Recommendation- We can encourage these customers to give good reviews on our online platform or in google my business.
+~~~ SQL
+/*Get month-on-month orders by states*/
 ~~~
 
 
 
+~~~ SQL
+/*Get month-on-month orders by states*/
+~~~
 
 
 
+~~~ SQL
+/*Get month-on-month orders by states*/
+~~~
+
+
+
+~~~ SQL
+/*Get month-on-month orders by states*/
+~~~
+
+
+~~~ SQL
+/*Get month-on-month orders by states*/
+~~~
+
+
+
+~~~ SQL
+/*Get month-on-month orders by states*/
+~~~
+
+
+
+~~~ SQL
+/*Get month-on-month orders by states*/
+~~~
+
+
+
+~~~ SQL
+/*Get month-on-month orders by states*/
+~~~
+
+
+
+~~~ SQL
+/*Get month-on-month orders by states*/
+~~~
+
+
+
+~~~ SQL
+/*Get month-on-month orders by states*/
+~~~
 
 
 
