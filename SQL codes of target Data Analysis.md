@@ -198,61 +198,166 @@ Recommendation- we can analyze the reason for the late delivery and give the cor
 **Insight2**- After sorting data by Delivery_time we can see there is an order which is delivered on the same day or in 1 day.
 Recommendation- We can encourage these customers to give good reviews on our online platform or in google my business.
 ~~~ SQL
-/*Get month-on-month orders by states*/
+/*Find time_to_delivery & diff_estimated_delivery. Formula for the same given below:*/
 ~~~
 
 
 
 ~~~ SQL
 /*Get month-on-month orders by states*/
+SELECT
+ 	order_purchase_timestamp,
+ 	order_delivered_customer_date,
+ 	DATE_DIFF(order_delivered_customer_date, order_purchase_timestamp, DAY) AS time_to_delivery
+FROM `Target.Orders`
+     WHERE
+ 	order_delivered_customer_date IS NOT NULL ORDER BY
+     time_to_delivery
 ~~~
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/3799c69c-9f19-4f6d-a1a3-2908ffec091b)
+**Insight**
+some orders being delivered within a day while others take over 200 days.
+**Recommendation**
+Optimize logistics processes and consider partnering with reliable carriers to ensure timely deliveries.
 
 
 
 ~~~ SQL
 /*Get month-on-month orders by states*/
+SELECT
+order_purchase_timestamp, order_estimated_delivery_date,
+DATE_DIFF(order_estimated_delivery_date, order_purchase_timestamp, DAY) AS diff_estimated_delivery
+FROM
+`Target.Orders` WHERE
+order_delivered_customer_date IS NOT NULL ORDER BY
+diff_estimated_delivery desc
 ~~~
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/5e09df40-d34d-4a09-8ada-117a2ace7bb5)
 
 
 
 ~~~ SQL
-/*Get month-on-month orders by states*/
+/*5.4 Group data by state, take mean of freight_value, time_to_delivery, diff_estimated_delivery*/
+
+SELECT
+customer_state, AVG(freight_value) AS Avg_Freight,
+AVG(time_to_delivery) AS Avg_time_to_delivery, AVG(diff_estimated_deliver) AS Avg_diff_estimated_deliver, FROM
+(SELECT
+     customer_state,
+     DATE_DIFF(order_delivered_customer_date, order_purchase_timestamp, DAY) AS time_to_delivery,
+     DATE_DIFF(order_estimated_delivery_date, order_purchase_timestamp, DAY) AS diff_estimated_deliver,
+     freight_value FROM
+     `Target.order_items` AS items INNER JOIN
+     `Target.Orders` AS o ON
+     items.order_id = o.order_id INNER JOIN
+     `Target.Customers` AS c ON o.customer_id = c.customer_id
+WHERE order_delivered_customer_date IS NOT NULL)
+  GROUP BY customer_state
+  Order by Avg_time_to_delivery desc
 ~~~
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/ceb8ba04-d57a-44a4-9640-98883f421c45)
 
 
 ~~~ SQL
-/*Get month-on-month orders by states*/
+/*5.5 Top 5 states with highest/lowest average freight value - sort in desc/asc limit 5*/
+SELECT customer_state,AVG(freight_value) AS Avg_Freight
+FROM
+(SELECT
+ 	customer_state,
+ 	DATE_DIFF(order_delivered_customer_date, order_purchase_timestamp, DAY) AS time_to_delivery,
+ 	DATE_DIFF(order_estimated_delivery_date, order_purchase_timestamp, DAY) AS diff_estimated_deliver,
+ 	freight_value
+  FROM
+ 	`Target.order_items` AS items
+     INNER JOIN
+ 	`Target.Orders` AS o
+     ON
+ 	items.order_id = o.order_id
+     INNER JOIN
+ 	`Target.Customers` AS c
+     ON
+ 	o.customer_id = c.customer_id
+     WHERE
+ 	order_delivered_customer_date IS NOT NULL) GROUP BY customer_state
+ORDER BY Avg_Freight DESC LIMIT 5;
 ~~~
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/fe860418-66ba-4661-b668-73fab3999fca)
 
 
 
 ~~~ SQL
-/*Get month-on-month orders by states*/
+/*5.6 Top 5 states with highest/lowest average time to delivery*/
+SELECT
+customer_state,
+AVG(time_to_delivery) AS Avg_time_to_delivery FROM
+(SELECT
+customer_state,
+DATE_DIFF(order_delivered_customer_date, order_purchase_timestamp, DAY) AS time_to_delivery
+FROM
+`Target.order_items` AS items INNER JOIN
+`Target.Orders` AS o ON
+items.order_id = o.order_id INNER JOIN
+`Target.Customers` AS c ON
+o.customer_id = c.customer_id WHERE
+order_delivered_customer_date IS NOT NULL) GROUP BY customer_state
+ORDER BY Avg_time_to_delivery DESC LIMIT 5;
 ~~~
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/b966110d-2006-4d6e-aa6a-3c7b08bb997a)
 
 
 
 ~~~ SQL
-/*Get month-on-month orders by states*/
+/*Top 5 states where delivery is really fast/ not so fast compared to estimated date*/
+SELECT
+customer_state,
+AVG(diff_estimated_delivery) as diff_estimated_delivery FROM
+(SELECT
+customer_state, order_estimated_delivery_date, order_delivered_customer_date,
+DATE_DIFF(order_estimated_delivery_date,order_delivered_customer_date , DAY) AS diff_estimated_delivery
+FROM
+`Target.order_items` AS items INNER JOIN
+`Target.Orders` AS o ON
+items.order_id = o.order_id INNER JOIN
+`Target.Customers` AS c
+
+ON
+o.customer_id = c.customer_id WHERE
+order_delivered_customer_date IS NOT NULL) GROUP BY customer_state
+ORDER BY diff_estimated_delivery ASC Limit 5
 ~~~
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/962d24d7-b35f-4883-967e-63074516f4af)
+
+**6.Payment type analysis:**
+
+~~~ SQL
+/*6.1 Month over Month count of orders for different payment types*/
+
+With Base as(SELECT Payment_type,
+Month, Year,
+count(distinct(order_id)) as Customer_count,
+FROM (SELECT
+o.customer_id, p.payment_type, o.order_id,
+EXTRACT(Month from order_purchase_timestamp) As Month, EXTRACT(Year from order_purchase_timestamp) As Year
+FROM `Target.Orders` AS o
+LEFT JOIN `Target.Payments` AS p ON o.order_id = p.order_id)
+GROUP BY payment_type, Month, Year ORDER BY Payment_type,Year,Month),
+base2 as (Select *, Lag(Customer_count) over (PARTITION BY Payment_type order by Year,Month )as previous_Customer_count from base )
+SELECT *, (Customer_count-previous_Customer_count)/previous_Customer_count*100 as per_INC from base2
+~~~
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/0f6bcadf-a873-468e-b47f-10bfc1769bc2)
 
 
 
 ~~~ SQL
-/*Get month-on-month orders by states*/
+/*Count of orders based on the no. of payment installments*/
+
+Select payment_installments,
+Count(distinct order_id) as order_count FROM
+`Target.Payments`
+GROUP BY payment_installments order by order_count Desc
 ~~~
+![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/bca1fdfd-6b3b-4324-95b4-03113c758403)
 
-
-
-~~~ SQL
-/*Get month-on-month orders by states*/
-~~~
-
-
-
-~~~ SQL
-/*Get month-on-month orders by states*/
-~~~
 
 
 
