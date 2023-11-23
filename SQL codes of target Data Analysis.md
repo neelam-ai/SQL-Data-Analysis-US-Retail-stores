@@ -50,6 +50,7 @@ FROM `Target.Geolocation`
 **2. In-depth Exploration**
 
 **2.1 Is there a growing trend on e-commerce in Brazil? How can we describe a complete scenario? 
+
 2.2 Can we see some seasonality with peaks at specific months?**
 ~~~ SQL
 SELECT
@@ -92,9 +93,11 @@ END as Buying_time FROM
 ~~~
 ![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/37171c89-1184-493d-a7f7-7fdf109bfccc)
 Nighttime purchases had the highest count of 38,652, followed by afternoon purchases with a count of 38,361. Morning and Dawn purchases had the lowest count with 22,240.
+
 **3. Evolution of E-commerce Orders in Brazil Region**
 
 **3.1 Get month-on-month orders by states**
+
 ~~~ SQL
 SELECT
 customer_state,
@@ -112,6 +115,7 @@ ORDER BY customer_state, Year,Month
 
 
 **How are the customers distributed across all the states?**
+
 ~~~ SQL
 SELECT
 customer_state,
@@ -151,6 +155,7 @@ SELECT *, (revenue-previous_revenue)/previous_revenue*100 as per_INC from base2
 
 
 **4.2 and 4.3 Mean & Sum of price and freight value by a customer state**
+
 ~~~ SQL
 SELECT
 customer_state,
@@ -180,6 +185,7 @@ Recommendation-
 **5.Analysis of sales, freight, and delivery time**
 
 **5.1 Calculate days between purchasing, delivering and estimated delivery**
+
 ~~~ SQL
 SELECT
  	order_purchase_timestamp,
@@ -210,6 +216,7 @@ Recommendation- We can encourage these customers to give good reviews on our onl
 
 
 **Find time_to_delivery & diff_estimated_delivery. Formula for the same given below:**
+
 ~~~ SQL
 SELECT
  	order_purchase_timestamp,
@@ -331,6 +338,7 @@ order_delivered_customer_date IS NOT NULL) GROUP BY customer_state
 ORDER BY diff_estimated_delivery ASC Limit 5
 ~~~
 ![image](https://github.com/neelam-ai/SQL-Data-Analysis-US-Retail-stores/assets/140748255/962d24d7-b35f-4883-967e-63074516f4af)
+
 
 **6.Payment type analysis:**
 
